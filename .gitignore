@@ -62,3 +62,24 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Misc File
+*.meta
+*.unity
+*.prefab
+*.shader
+*.fbx
+*.tga
+*.mat
+*.png
+*.GUISkin
+*.renderTexture
+*.suo
+
+# Folder
+Release/
+Standard Assets/
+IGSoft_Resources/
+IGSoft_Tools/
+Editor/
+Terrians/
