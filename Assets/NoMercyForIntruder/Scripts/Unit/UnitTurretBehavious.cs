@@ -25,6 +25,7 @@ namespace NoMercyForIntruder.Game.Unit
         [SerializeField] private int magazineSize;
         [SerializeField] private float reloadTime;
         [SerializeField] private int magazineCount;
+        [SerializeField] private Vector3 rotationModifier = Vector3.zero;
 
         private TurretState m_curTurretState;
         private bool m_canFire;
@@ -87,7 +88,6 @@ namespace NoMercyForIntruder.Game.Unit
                             {
                                 m_curTurretState = TurretState.reloading;
                             }
-                            m_curTurretState = TurretState.aiming;
                         }
                     }
                     else
@@ -95,6 +95,18 @@ namespace NoMercyForIntruder.Game.Unit
                         if (m_timer < fireInterval)
                         {
                             m_timer += Time.deltaTime;
+                            // Adjust shoot angle
+                            aimer.LookAt(m_target);
+                            float targetPosY = aimer.localEulerAngles.y;
+                            if (Mathf.Abs(transform.localEulerAngles.z - targetPosY) > 5f)
+                            {
+                                transform.Rotate(Vector3.forward, rotateSpeed * Time.deltaTime * m_rotateDir);
+                            }
+                            else
+                            {
+                                transform.localEulerAngles = new Vector3(0, 0, targetPosY);
+                                m_curTurretState = TurretState.attacking;
+                            }
                         }
                         else
                         {
@@ -137,8 +149,9 @@ namespace NoMercyForIntruder.Game.Unit
         {
             m_target = target;
             aimer.LookAt(target);
+            aimer.rotation *= Quaternion.Euler(rotationModifier);
             float _axisYDeg = aimer.localEulerAngles.y;
-            float yDegDiff = transform.localEulerAngles.y - _axisYDeg;
+            float yDegDiff = transform.localEulerAngles.z - _axisYDeg;
             if (yDegDiff > -360 && yDegDiff <= -180) m_rotateDir = -1;
             else if (yDegDiff > -180 && yDegDiff <= 0) m_rotateDir = 1;
             else if (yDegDiff > 0 && yDegDiff <= 180) m_rotateDir = -1;

@@ -40,6 +40,8 @@ namespace NoMercyForIntruder.Game.Weapon
 
         void Death()
         {
+            if (effect != null)
+                Instantiate(effect, transform.position, Quaternion.identity);
             Destroy(gameObject);
         }
 
