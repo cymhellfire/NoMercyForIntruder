@@ -14,6 +14,7 @@ namespace NoMercyForIntruder.Game.Building
         [SerializeField] private float distance;
 
         private Vector3 m_curPos;
+        private bool m_fieldShowed;
         private BuildingBaseBehaviour[,] m_BuidingBases;
 
         public BuildingBaseBehaviour[,] GetBuildingBases() { return m_BuidingBases; }
@@ -24,6 +25,7 @@ namespace NoMercyForIntruder.Game.Building
         {
             m_curPos = transform.position;
             m_BuidingBases = new BuildingBaseBehaviour[fieldSize[0], fieldSize[1]];
+            m_fieldShowed = true;
             Initialization();
         }
 
@@ -41,6 +43,34 @@ namespace NoMercyForIntruder.Game.Building
                 m_curPos.x = transform.position.x;
                 m_curPos.z += distance;
             }
+            HideBuildField();
         }
+
+        public void ShowBuildField()
+        {
+            if (m_fieldShowed) return;
+            for (int i = 0; i < fieldSize[0]; i++)
+            {
+                for (int j = 0; j < fieldSize[1]; j++)
+                {
+                    m_BuidingBases[i, j].gameObject.SetActive(true);
+                }
+            }
+            m_fieldShowed = true;
+        }
+
+        public void HideBuildField()
+        {
+            if (!m_fieldShowed) return;
+            for(int i = 0; i < fieldSize[0]; i++)
+            {
+                for (int j = 0; j < fieldSize[1]; j++)
+                {
+                    m_BuidingBases[i, j].gameObject.SetActive(false);
+                }
+            }
+            m_fieldShowed = false;
+        }
+        
     }
 }

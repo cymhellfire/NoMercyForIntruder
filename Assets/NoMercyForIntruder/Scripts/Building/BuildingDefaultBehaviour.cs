@@ -27,12 +27,14 @@ namespace NoMercyForIntruder.Game.Building
         [Tooltip("四项资源分别是：木头、食物、石油和钢铁")]
         [SerializeField] private int[] buildCost = new int[4];
         [SerializeField] private BuildingType buildingType = BuildingType.None;
+        [SerializeField] private int maxHealth;
 
         private bool m_selected;
         private BuildingState m_curBuildingState;
         private int m_useBaseCount = 0;
         private BuildingBaseBehaviour[] m_takenBuildBases;
         private GameFieldInitialization m_gameField;
+        private int m_curHealth;
 
         public int[] GetCost { get { return buildCost; } }
 
@@ -40,6 +42,7 @@ namespace NoMercyForIntruder.Game.Building
         void Start()
         {
             m_selected = false;
+            m_curHealth = maxHealth;
             m_curBuildingState = BuildingState.setup;
         }
 
@@ -56,12 +59,16 @@ namespace NoMercyForIntruder.Game.Building
                 if (!m_selected)
                 {
                     m_selected = true;
-                    selectedEffect.SetActive(true);
+                    if (selectedEffect) selectedEffect.SetActive(true);
                     switch(buildingType)
                     {
                         case BuildingType.Resource:
                             ResourceBuildingBehaviour res = GetComponent<ResourceBuildingBehaviour>();
                             res.GetResource();
+                            break;
+                        case BuildingType.Factory:
+                            FactoryBuildingBehaviour fac = GetComponent<FactoryBuildingBehaviour>();
+                            fac.ShowTrainMenu();
                             break;
                     }
                 }
@@ -71,7 +78,14 @@ namespace NoMercyForIntruder.Game.Building
                 if (m_selected)
                 {
                     m_selected = false;
-                    selectedEffect.SetActive(false);
+                    if (selectedEffect) selectedEffect.SetActive(false);
+                    switch(buildingType)
+                    {
+                        case BuildingType.Factory:
+                            FactoryBuildingBehaviour fac = GetComponent<FactoryBuildingBehaviour>();
+                            fac.HideTrainMenu();
+                            break;
+                    }
                 }
             }
         }
@@ -106,6 +120,9 @@ namespace NoMercyForIntruder.Game.Building
                     m_useBaseCount++;
                 }
             }
+            float offsetX = (float)(buildingSize[0] / 2.0 - 0.5);
+            float offsetY = (float)(buildingSize[1] / 2.0 - 0.5);
+            gameObject.transform.position += new Vector3(offsetX, 0, offsetY);
         }
 
         void ReleaseTakenBase()
@@ -123,6 +140,20 @@ namespace NoMercyForIntruder.Game.Building
             Destroy(gameObject);
         }
 
+        public void Damage(int damage)
+        {
+            m_curHealth -= damage;
+            if (m_curHealth <= 0)
+            {
+                BuildingDestroy();
+            }
+        }
+
+        void BuildingDestroy()
+        {
+            ReleaseTakenBase();
+            Destroy(gameObject);
+        }
     }
 
 }

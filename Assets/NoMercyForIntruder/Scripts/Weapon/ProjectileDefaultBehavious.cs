@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using NoMercyForIntruder.Game.Building;
 
 namespace NoMercyForIntruder.Game.Weapon
 {
@@ -8,7 +9,7 @@ namespace NoMercyForIntruder.Game.Weapon
     {
 
         [SerializeField] private GameObject effect;
-        [SerializeField] private float damage;
+        [SerializeField] private int damage;
         [SerializeField] private float lifeTime;
 
         private float m_timer;
@@ -35,6 +36,14 @@ namespace NoMercyForIntruder.Game.Weapon
 
         void OnCollisionEnter(Collision col)
         {
+            if (col.collider.tag == "Building")
+            {
+                BuildingDefaultBehaviour build = col.collider.transform.GetComponentInParent<BuildingDefaultBehaviour>();
+                if (build)
+                {
+                    build.Damage(damage);
+                }
+            }
             Death();
         }
 

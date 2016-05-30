@@ -13,6 +13,12 @@ namespace NoMercyForIntruder.Game.Unit
         attacking
     }
 
+    internal enum UnitSize
+    {
+        standard,
+        heavy
+    }
+
     [RequireComponent(typeof(Seeker))]
     public class UnitDefaultBehavious : MonoBehaviour
     {
@@ -21,8 +27,12 @@ namespace NoMercyForIntruder.Game.Unit
         [SerializeField] private float speed;
         [SerializeField] private float rotateSpeed;
         [SerializeField] private float nextWaypointDistance;
-        [SerializeField] private Text stateShow;
         [SerializeField] private GameObject aimer;
+        [Tooltip("训练单位所需资源，木头、食物、石油和钢铁")]
+        [SerializeField] private int[] buildCost = new int[4];
+        [Tooltip("该单位占用工厂多少容量")]
+        [SerializeField] private int capacityTook = 0;
+        [SerializeField] private UnitSize unitSize;
 
         private int m_curHP;
         private UnitState m_curState;
@@ -32,24 +42,34 @@ namespace NoMercyForIntruder.Game.Unit
         private int m_rotateDir;
         private Seeker m_seeker;
         private UnitTurretBehavious m_turret;
+        private UnitHeavyTurretBehavious m_heavyTurret;
         private Transform m_target;
+
+        public int[] GetBuildCost { get { return buildCost; } }
+        public int GetCapacityTook { get { return capacityTook; } }
 
         // Use this for initialization
         void Start()
         {
             m_curState = UnitState.idle;
             m_seeker = GetComponent<Seeker>();
-            stateShow.text = transform.rotation.ToString();
-            m_turret = GetComponentInChildren<UnitTurretBehavious>();
+            switch(unitSize)
+            {
+                case UnitSize.standard:
+                    m_turret = GetComponentInChildren<UnitTurretBehavious>();
+                    break;
+                case UnitSize.heavy:
+                    m_heavyTurret = GetComponentInChildren<UnitHeavyTurretBehavious>();
+                    break;
+            }
             m_target = null;
         }
 
         // Update is called once per frame
         void Update()
         {
-            CheckInput();
+            // CheckInput();
             FSM();
-            stateShow.text = m_curState.ToString();
         }
 
         void OnPathComplete(Path path)
@@ -76,21 +96,47 @@ namespace NoMercyForIntruder.Game.Unit
                         m_target = null;
                         m_targetPos = hit.point;
                         m_seeker.StartPath(transform.position, m_targetPos, OnPathComplete);
-                        m_turret.Stop();
+                        switch (unitSize)
+                        {
+                            case UnitSize.standard:
+                                m_turret.Stop();
+                                break;
+                            case UnitSize.heavy:
+                                m_heavyTurret.Stop();
+                                break;
+                        }
                     }
                     else if (hit.collider.tag == "Building")
                     {
                         m_target = hit.collider.transform;
-                        if (Vector3.Distance(transform.position, hit.collider.transform.position) > m_turret.GetRange)
+                        switch(unitSize)
                         {
-                            m_targetPos = hit.collider.transform.position;
-                            m_seeker.StartPath(transform.position, m_targetPos, OnPathComplete);
-                            m_turret.Stop();
-                        }
-                        else
-                        {
-                            m_turret.SetTarget(hit.collider.transform);
-                            m_curState = UnitState.attacking;
+                            case UnitSize.standard:
+                                if (Vector3.Distance(transform.position, hit.collider.transform.position) > m_turret.GetRange)
+                                {
+                                    m_targetPos = hit.collider.transform.position;
+                                    m_seeker.StartPath(transform.position, m_targetPos, OnPathComplete);
+                                    m_turret.Stop();
+                                }
+                                else
+                                {
+                                    m_turret.SetTarget(hit.collider.transform);
+                                    m_curState = UnitState.attacking;
+                                }
+                                break;
+                            case UnitSize.heavy:
+                                if (Vector3.Distance(transform.position, hit.collider.transform.position) > m_heavyTurret.GetRange)
+                                {
+                                    m_targetPos = hit.collider.transform.position;
+                                    m_seeker.StartPath(transform.position, m_targetPos, OnPathComplete);
+                                    m_heavyTurret.Stop();
+                                }
+                                else
+                                {
+                                    m_heavyTurret.SetTarget(hit.collider.transform);
+                                    m_curState = UnitState.attacking;
+                                }
+                                break;
                         }
                     }
                 }
@@ -107,11 +153,24 @@ namespace NoMercyForIntruder.Game.Unit
                 case UnitState.moving:
                     if (m_target != null)
                     {
-                        if (Vector3.Distance(transform.position, m_target.position) <= m_turret.GetRange)
+                        switch(unitSize)
                         {
-                            m_turret.SetTarget(m_target);
-                            m_curState = UnitState.attacking;
-                            return;
+                            case UnitSize.standard:
+                                if (Vector3.Distance(transform.position, m_target.position) <= m_turret.GetRange)
+                                {
+                                    m_turret.SetTarget(m_target);
+                                    m_curState = UnitState.attacking;
+                                    return;
+                                }
+                                break;
+                            case UnitSize.heavy:
+                                if (Vector3.Distance(transform.position, m_target.position) <= m_heavyTurret.GetRange)
+                                {
+                                    m_heavyTurret.SetTarget(m_target);
+                                    m_curState = UnitState.attacking;
+                                    return;
+                                }
+                                break;
                         }
                     }
                     if (m_path == null)

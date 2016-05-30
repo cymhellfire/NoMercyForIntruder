@@ -4,7 +4,7 @@ using System.Collections;
 namespace NoMercyForIntruder.Game.Unit
 {
 
-    public class UnitTurretBehavious : MonoBehaviour
+    public class UnitHeavyTurretBehavious : MonoBehaviour
     {
 
         private enum TurretState
@@ -16,7 +16,8 @@ namespace NoMercyForIntruder.Game.Unit
         }
 
         [SerializeField] private GameObject projectile;
-        [SerializeField] private Transform projectilePos;
+        [SerializeField] private Transform[] projectilePos;
+        [SerializeField] private int shotPerBarrel;
         [SerializeField] private Transform aimer;
         [SerializeField] private float muzzleSpeed;
         [SerializeField] private float rotateSpeed;
@@ -34,6 +35,8 @@ namespace NoMercyForIntruder.Game.Unit
         private int m_rotateDir;
         private int m_curMagAmmo;
         private int m_curMagCount;
+        private int m_curBarrelIndex;
+        private int m_curBarrelShot;
         private Quaternion m_prevRotation;
 
         public float GetRange { get { return range; } }
@@ -45,6 +48,8 @@ namespace NoMercyForIntruder.Game.Unit
             m_timer = 0f;
             m_curMagAmmo = magazineSize;
             m_curMagCount = magazineCount - 1;
+            m_curBarrelIndex = 0;
+            m_curBarrelShot = shotPerBarrel;
             if (m_curMagCount < 0) m_curMagCount = -1;
             m_canFire = true;
             m_prevRotation = transform.rotation;
@@ -83,10 +88,17 @@ namespace NoMercyForIntruder.Game.Unit
                     }
                     if (m_canFire)
                     {
-                        GameObject go = Instantiate(projectile, projectilePos.position, projectilePos.rotation) as GameObject;
+                        GameObject go = Instantiate(projectile, projectilePos[m_curBarrelIndex].position, projectilePos[m_curBarrelIndex].rotation) as GameObject;
                         Rigidbody body = go.GetComponent<Rigidbody>();
                         body.velocity = go.transform.forward * muzzleSpeed;
                         m_canFire = false;
+                        m_curBarrelShot--;
+                        if (m_curBarrelShot == 0)
+                        {
+                            m_curBarrelIndex++;
+                            m_curBarrelShot = shotPerBarrel;
+                            if (m_curBarrelIndex >= projectilePos.Length) m_curBarrelIndex = 0;
+                        }
                         if (m_curMagAmmo > 0)
                         {
                             m_curMagAmmo--;
@@ -136,12 +148,16 @@ namespace NoMercyForIntruder.Game.Unit
                             m_curMagAmmo = magazineSize;
                             m_curTurretState = TurretState.aiming;
                             m_canFire = true;
+                            m_curBarrelIndex = 0;
+                            m_curBarrelShot = shotPerBarrel;
                         }
                         else if (m_curMagCount == -1)
                         {
                             m_curMagAmmo = magazineSize;
                             m_curTurretState = TurretState.aiming;
                             m_canFire = true;
+                            m_curBarrelIndex = 0;
+                            m_curBarrelShot = shotPerBarrel;
                         }
                         else
                         {
